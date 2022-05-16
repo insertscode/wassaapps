@@ -1,0 +1,54 @@
+<%if(flashId == 'guest_mode'){ %> 
+    <script>
+        document.getElementById('nav-wassaapps').outerHTML = '<a id="nav-wassaapps" class="navbar-brand" href="/"> Wassaapps </a>'
+        document.getElementById('nav-login').innerHTML =     '<a class="nav-link active" href="/user/guest_dash"> Guest Mode </a>';
+        document.getElementById('nav-flash').innerHTML =     '<a class="nav-link" href="/flash/guest_flash_dash"> Flashcards </a></li>';
+        document.getElementById('nav-cab').innerHTML =       '<a class="nav-link disabled" href="/user/user_dash"> Cabinets </a></li>';
+    </script>
+<% } else { %>
+    <script> 
+        // Update the nav links
+        document.getElementById('nav-wassaapps').outerHTML = '<a id="nav-wassaapps" class="navbar-brand" href="/user/user_dash"> Wassaapps </a>'
+        document.getElementById('nav-login').innerHTML =     '<a class="nav-link" href="/logout"> Logout </a>';
+        document.getElementById('nav-flash').innerHTML =     '<a class="nav-link" href="/flash/flash_dash"> Flashcards </a></li>';
+        document.getElementById('nav-cab').innerHTML =       '<a class="nav-link disabled" href="/user/user_dash"> Cabinets </a></li>';
+    </script>
+<% } %>
+
+<p class="lead mb-3 mx-2"> <%= name %> <br> <%= email %></p> 
+<h1 class="mt-4 mx-2"> Welcome to Wassaapps! </h1>
+<hr style="border: 0.2rem solid #F3969A;">
+
+<!-- Apps -->
+<div class="row mt-2 mx-5">
+    <div class="d-flex justify-content-between" style="width: 100%;">
+        <div class="card mx-2" style="width: 45%;">
+            <img class="card-img-top" src='' alt="Cant load image">
+            <div class="card-body">
+                <h5 class="card-title"> Flash </h5>
+                <p class="card-text"> A simple flashcard app with hidden answers, color options, and custom sets. <br> Great for studying! </p>
+                <%if(flashId != 'guest_mode'){ %> 
+                    <a href="/flash/flash_dash" class="btn btn-secondary btn-block mb-1"> Access flashcard app </a>
+                <% } else { %>
+                    <a href="/flash/guest_flash_dash" class="btn btn-secondary btn-block mb-1"> Access flashcard app </a>
+                <% } %>
+            </div>
+        </div>
+        <div class="card mx-2" style="width: 45%;">
+            <img class="card-img-top" src='' alt="This app has not been designed yet.">
+            <div class="card-body">
+                <h5 class="card-title">Cabinets</h5>
+                <p class="card-text">
+                    The goal of this app is to have an online database of the grocies currently in stock. With this information
+                    avaliable while at the store, I hope to design an easy UI to help people shop and minimize forgotten groceries!
+                </p>
+                <form id="cab_dash" action="/cab_dash" method="GET">
+                    <div class="form-group" style="display: none;"><textarea name="name" type="hidden" form="cab_dash"><%= name %></textarea></div>
+                    <div class="form-group" style="display: none;"><textarea name="email" type="hidden" form="cab_dash"><%= email %></textarea></div>
+                    <button type="submit" class="btn btn-secondary btn-block mb-1"> Access cabinets app </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- New Content Above -->

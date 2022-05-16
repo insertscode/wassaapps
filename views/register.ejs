@@ -1,0 +1,57 @@
+<script>
+    function changeColor(e, value){ e.parentElement.parentElement.parentElement.style.backgroundColor = value; };
+</script>
+
+<div class="row mt-5">
+    <div class="col-md-6 m-auto">
+        <div class="card card-body">
+            <h1 class="text-center mb-3"> Register <i class="fa-solid fa-id-card"></i></h1>
+            <%- include('partials/messages.ejs') %>
+            <form action="/users/register" method="POST">
+                <!-- Enter Name -->
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="name" id="name" name="name" class="form-control" placeholder="Enter Name" value="<%= typeof name != 'undefined' ? name : '' %>">
+                </div>
+                <!-- Enter Email -->
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="Enter Email" value="<%= typeof email != 'undefined' ? email : '' %>">
+                </div>
+                <!-- Choose default color here -->
+                <label for="background">Background Color</label>
+                <div class="ml-3" style="width:200px;">
+                    <select name="background" id="newColor" onchange="changeColor(this, value)">
+                    <option value="White" style="background-color: white">Default: White</option>
+                    <option value="Wheat" style="background-color: wheat;"> Wheat </option>
+                    <option value="Lightgoldenrodyellow" style="background-color: lightgoldenrodyellow;"> Lightgoldenrodyellow </option>
+                    <option value="Papayawhip" style="background-color: papayawhip;"> Papayawhip </option>
+                    <option value="Peru" style="background-color: peru;"> Peru </option>
+                    <option value="Slateblue" style="background-color: slateblue;"> Slateblue </option>
+                    <option value="Lemonchiffon" style="background-color: lemonchiffon;"> lemonchiffon </option>
+                    </select>
+                </div>
+                <!-- Enter Password -->
+                <div class="form-group">
+                    <label for="password">Password(must be atleast 12 characters in length)</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter Password" value="<%= typeof password != 'undefined' ? password : '' %>">
+                </div>
+                <!-- Verify Pass -->
+                <div class="form-group">
+                    <label for="password2">Verify Password</label>
+                    <input type="password" id="password2" name="password2" class="form-control" placeholder="Verify Password" value="<%= typeof password2 != 'undefined' ? password2 : '' %>">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Sign me up!</button>
+                <div>
+                    <div class="section">
+                        <a href="/auth/google" class="btn" style="background-color: forestgreen;">
+                            <i class="fab fa-google left"></i> 
+                            Register With Google
+                        </a>
+                    </div>
+                </div>
+            </form>
+            <p class="lead mt-4">Have an account already? whoops.. <a href="/users/login">Login Here</a></p>
+        </div>
+    </div>
+</div>

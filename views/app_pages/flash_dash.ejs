@@ -1,0 +1,168 @@
+<script> 
+    // Convert the login option to a logout option upon a successful login
+    document.getElementById('nav-wassaapps').outerHTML = '<a id="nav-wassaapps" class="navbar-brand" href="/user/user_dash" style="color: rgba(255,255,255,.6);"> Wassaapps </a>'
+    document.getElementById('nav-login').outerHTML =     '<li id="nav-login" class="nav-item"><a class="nav-link" href="/login"> Logout </a></li>'
+    document.getElementById('nav-flash').outerHTML =     '<li id="nav-flash" class="nav-item active"><a class="nav-link" href="/flash/flash_dash"> Flashcards </a></li>'
+    document.getElementById('nav-cab').outerHTML =       '<li id="nav-cab" class="nav-item"><a class="nav-link disabled" href="/user/user_dash"> Cabinets </a></li>'
+
+    // Allow highlight and unhighlight
+    document.getElementById('nav-wassaapps').setAttribute('onmouseover', "this.style.color='white'")
+    document.getElementById('nav-wassaapps').setAttribute('onmouseout', "this.style.color='rgba(255,255,255,.6)';")
+
+    // Changes the color when editing flashcards
+    function changeColor(e, value){ e.parentElement.parentElement.parentElement.style.backgroundColor = value; };
+</script>
+
+<script>
+    /* Event Listeners */
+    function start(){
+        // Constants
+        const newCard = document.getElementById("newCardPrompt");
+        const form = document.getElementById("add-card-form");
+        var cardBackup = ""
+        var cardParent = ""
+
+        // Card edit window
+        const cancelEdit_button = document.getElementById("cancelEdit");
+        const newFlash_button = document.getElementById("newFlash");
+
+        // Create a new card
+        newFlash_button.addEventListener("click", (e) => {
+            newFlash_button.classList.add("hide-prompt");
+            newCard.classList.remove("hide-prompt");
+            document.getElementById('cancelEdit').innerText = "Close Prompt";
+        });
+
+        // Undo changes on existing card
+        cancelEdit_button.addEventListener("click", (e) => {
+            newFlash_button.classList.remove("hide-prompt");
+            newCard.classList.add("hide-prompt");
+            cardParent.appendChild(cardBackup);
+            guestResetCardPrompt()
+        });
+
+        // Flashcard handler : Toggles answer or moves card to the editing section
+        flashcards.addEventListener("click", (e) => {
+            const etp = e.target.parentElement
+            if (e.target.classList.contains("toggle")) etp.nextElementSibling.classList.toggle("hide-ans");
+            else if (e.target.classList.contains("edit")){
+                // Display edit prompt
+                document.getElementById('cancelEdit').innerText = "Undo Changes"
+                newFlash_button.classList.add("hide-prompt");
+                newCard.classList.remove("hide-prompt"); 
+
+                // Backup card and parent to undo changes
+                cardBackup = etp.parentElement.parentElement
+                cardParent = cardBackup.parentElement
+                etp.parentElement.parentElement.remove()
+         
+                // Set the prompts' values
+                document.getElementById('edit_question').value = cardBackup.children[0].children[2].textContent;
+                document.getElementById('edit_answer').value = cardBackup.children[0].children[4].textContent;
+                document.getElementById('edit_category').value = cardBackup.children[0].children[0].firstElementChild.name;
+                document.getElementById('cardColors').value = cardBackup.children[0].children[0].children[1].innerText; 
+                newCard.style.backgroundColor = cardBackup.children[0].children[0].children[1].innerText;
+
+                // Move card out of edit window
+                let textarea = document.createElement("textarea");
+                textarea.name = "cardId";
+                textarea.type = "hidden";
+                textarea.form = "add-card-form";
+                textarea.innerHTML = cardBackup.children[0].children[1].id;
+                let div = document.createElement("div");
+                div.classList = 'form-group';
+                div.style = "display: none;";
+                div.appendChild(textarea);
+                form.appendChild(div);
+            }
+        });
+    } // End of start
+
+    // Create the event listeners when the initial HTML is done being parsed.   
+    document.addEventListener("DOMContentLoaded", function(){ start();} );
+</script>
+
+<style>
+    .hide-prompt{ display: none; }
+    .hide-ans{ display: none; }
+    .color-selector{ padding: 12px 5px 12px 5px;}
+</style>
+
+<h1 class="mt-4 mx-2"> Welcome to Flash <%= name %>! </h1>
+<div class="d-flex justify-content-center">
+    <div class="col-md-4 my-1">
+        <button class="btn btn-info my-2" id="newFlash"> Create a Flashcard </button>
+        <div class="card card-body prompt hide-prompt" id="newCardPrompt">
+            <button class="btn btn-info my-2" id="cancelEdit"> Close Prompt </button>
+            <form id="add-card-form" action="/flash/add-card" method="POST"> 
+                <div class="form-group" style="display: none;"><textarea name="name" type="hidden" form="add-card-form"><%= name %></textarea></div>
+                <div class="form-group" style="display: none;"><textarea name="email" type="hidden" form="add-card-form"><%= email %></textarea></div>
+                <div class="form-group" style="display: none;"><textarea name="flashId" type="hidden" form="add-card-form"><%= flashId %></textarea></div>
+                <div class="form-group">
+                    <label for="question"> Question </label>
+                    <textarea id="edit_question" name="question" class="form-control" row="3" id="newQuestion"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="answer"> Answer </label>
+                    <textarea id="edit_answer" name="answer" class="form-control" row="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="set"> Category(optional) </label>
+                    <input type="text" id="edit_category" name="set" class="form-control" placeholder="Enter a category to save this card to.">
+                </div>
+                <label for="color"> Color </label>
+                <div id="prompt-color" class="ml-3" style="width:200px;">
+                    <select name="color" id="cardColors" onchange="changeColor(this, value)">
+                    <option value="White" style="background-color: white"><Option> White </Option></option>
+                    <option value="Wheat" style="background-color: wheat;"> Wheat </option>
+                    <option value="Lightgoldenrodyellow" style="background-color: lightgoldenrodyellow;"> Lightgoldenrodyellow </option>
+                    <option value="Papayawhip" style="background-color: papayawhip;"> Papayawhip </option>
+                    <option value="Peru" style="background-color: peru;"> Peru </option>
+                    <option value="Slateblue" style="background-color: slateblue;"> Slateblue </option>
+                    <option value="Lemonchiffon" style="background-color: lemonchiffon;"> lemonchiffon </option>
+                    </select>
+                </div>
+                <button id="card-prompt-btn" type="submit" class="btn btn-primary my-2" style="width: 100%;"> Save flashcard to database </button>
+            </form>    
+        </div>
+    </div>
+</div>
+<hr style="border: 0.2rem solid #F3969A;">
+<div class="mx-2">
+    <div id="flashcards">
+    <%if(typeof items != 'undefined'){ %>
+        <% if(typeof categories != 'undefined'){ %>
+            <% categories.forEach(cat => { %>
+                <h2 style="margin-top: 1rem; margin-bottom: 0rem;"><%= cat %></h2>
+                <div class="row" style="padding-left: 12px;">
+                    <% items.forEach(item => { %>
+                        <% if(item.set == cat){ %>
+                            <div class="col-md-4 px-1 py-1">
+                                <div class="card" style="padding: 5px 5px 5px 5px; background-color: <%= item.color %>; border: 0.05rem solid black;">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="#" id="edit" name="<%= cat %>" class="btn btn-secondary my-1 edit" style="border: 0.05rem solid black;"> Edit </a>
+                                        <div><p style="color:black;"><%= item.color %></p></div>
+                                        <form id="<%= item._id %>" action="/flash/del-card" method="POST"> 
+                                            <div class="form-group" style="display: none;"><textarea name="name" type="text"><%= name %></textarea></div>
+                                            <div class="form-group" style="display: none;"><textarea name="email" type="text"><%= email %></textarea></div>
+                                            <div class="form-group" style="display: none;"><textarea name="flashId" type="hidden"><%= flashId %></textarea></div>
+                                            <div class="form-group" style="display: none;"><textarea name="_id" type="text"><%= item._id %></textarea></div>
+                                            <div class="form-group" style="display: none;"><textarea name="cat" type="text"><%= cat %></textarea></div>
+                                            <button type="submit" class="btn btn-warning my-1" style="border: 0.05rem solid black;"> Delete </button>
+                                        </form>
+                                    </div>
+                                    <h1 id="<%= item._id %>" style="display: none;"></h1>
+                                    <h4 style="color: black;"><%= item.question %></h4>
+                                    <p class="my-2"><button class="toggle btn btn-outline-info"> Toggle Answer </button></p>
+                                    <h5 style="color: black;" class="mb-2 hide-ans"><%= item.answer %></h5>
+                                </div>
+                            </div>
+                        <%}%>
+                    <% }); %>
+                </div>
+                <hr style="border: 0.2rem solid #F3969A;">
+            <%});%>
+        <%}%>
+    <% }; %>
+    </div>
+</div>

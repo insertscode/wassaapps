@@ -1,0 +1,244 @@
+<script>
+    document.getElementById('nav-wassaapps').outerHTML = '<a id="nav-wassaapps" class="navbar-brand" href="/" style="color: rgba(255,255,255,.6);"> Wassaapps </a>'
+    document.getElementById('nav-login').innerHTML =     '<a class="nav-link active" href="/user/guest_dash"> Guest Mode </a>';
+    document.getElementById('nav-flash').innerHTML =     '<a class="nav-link" href="/flash/guest_flash_dash"> Flashcards </a></li>';
+    document.getElementById('nav-cab').innerHTML =       '<a class="nav-link disabled" href="/user/user_dash"> Cabinets </a></li>';
+
+    // Allow highlight and unhighlight
+    document.getElementById('nav-wassaapps').setAttribute('onmouseover', "this.style.color='white'")
+    document.getElementById('nav-wassaapps').setAttribute('onmouseout', "this.style.color='rgba(255,255,255,.6)';")
+
+    // Changes the color when editing flashcards
+    function changeColor(e, value){ e.parentElement.parentElement.parentElement.style.backgroundColor = value; };
+
+    /* Event Listeners */
+    function start(){
+        // Elements
+        const newCard = document.getElementById("newCardPrompt");
+        const newFlash_button = document.getElementById("newFlash");
+
+        // Opens the edit card prompt
+        newFlash_button.addEventListener("click", (e) => {
+            newFlash_button.classList.add("hide-prompt");
+            newCard.classList.remove("hide-prompt");
+            document.getElementById('cancelEdit').innerText = "Close Prompt";
+        });
+
+        // Shows & ides the flashcard answers
+        flashcards.addEventListener("click", (e) => {
+            // Toggle the flashcard answer
+            if (e.target.classList.contains("toggle")) {
+                e.target.parentElement.nextElementSibling.classList.toggle("hide-ans");
+            } 
+        });
+    } 
+
+    // Create the event listeners when the initial HTML is done being parsed.   
+    document.addEventListener("DOMContentLoaded", function(){ start();} );
+</script>
+
+<!-- The guest mode functions using sessionStorage -->
+<script>
+    function guestAddCard(){
+        let card = {
+            question: document.getElementById("edit_question").value,
+            answer: document.getElementById("edit_answer").value,
+            set:  document.getElementById("edit_category").value,
+            color: document.getElementById("prompt-color").childNodes[1].value
+        }
+        let cards = JSON.parse(sessionStorage.getItem("cards"));
+        let cats = JSON.parse(sessionStorage.getItem("cats"));
+        if (cards == null || cards.length == 0){
+            card.index = 0
+            sessionStorage.setItem("cards", JSON.stringify([card]))
+            sessionStorage.setItem("cats", JSON.stringify([card.set]))
+        } else {
+            card.index = cards[cards.length-1].index + 1
+            cards.push(card)
+            sessionStorage.setItem("cards", JSON.stringify(cards))
+            guestUpdateCategories(card.set, "add")
+        }
+        guestLoadCards()
+        guestResetCardPrompt()
+        return false;
+    }
+
+    function guestLoadCards(){
+        let cats = JSON.parse(sessionStorage.getItem("cats"));
+        let cards = JSON.parse(sessionStorage.getItem("cards"));
+        let cardsDict = {}
+        cards.forEach(card => {
+            if (!cardsDict[card.set]){
+                cardsDict[card.set] = [card]
+            } else {
+                cardsDict[card.set].push(card)
+            }
+        })
+        flashcards = document.getElementById("flashcards")
+        flashcards.innerHTML = ``
+        for (let [key, values] of Object.entries(cardsDict)) {
+            guestRenderCategory(flashcards, key, values)
+        }
+    }
+
+    function guestRenderCategory(flash, cat, cards){
+        flash.innerHTML += `<h2 style="margin-top: 1rem; margin-bottom: 0rem;">${cat}</h2><div id="cat-${cat}" class="row" style="padding-left: 12px;"></div>`
+        cardrow = document.getElementById(`cat-${cat}`)
+        cards.forEach(card => {
+            cardrow.innerHTML += 
+            `
+            <div class="col-md-4 px-1 py-1">
+                <div class="card" style="padding: 5px 5px 5px 5px; background-color:${card.color}; border: 0.05rem solid black;">
+                    <div class="d-flex justify-content-between">
+                        <button onclick="return guestEditCardPrompt(${card.index}); "class="btn btn-secondary my-1" id="edit-${card.index}"> Edit </button>
+                        <div><p style="color:black;">${card.color}</p></div>
+                        <form id="${card.index}" onsubmit='return guestDeleteCard(${card.index});'> 
+                            <div class="form-group" style="display: none;"><textarea name="_id" type="text">${card.index}</textarea></div>
+                            <div class="form-group" style="display: none;"><textarea name="cat" type="text">${cat}</textarea></div>
+                            <button type="submit" class="btn btn-warning my-1" style="border: 0.05rem solid black;"> Delete </button>
+                        </form>
+                    </div>
+                    <h1 id="${card.index}" style="display: none;"></h1>
+                    <h4 style="color: black;">${card.question}</h4>
+                    <p class="my-2"><button class="toggle btn btn-outline-info"> Toggle Answer </button></p>
+                    <h5 style="color: black;" class="mb-2 hide-ans"> ${card.answer} </h5>
+                </div>
+            </div>
+            `
+        })
+        flash.innerHTML += `<hr style="border: 0.2rem solid #F3969A;">`
+    }
+    
+    function guestDeleteCard(cardId){
+        let cards = JSON.parse(sessionStorage.getItem("cards"));
+        let idx = cards.findIndex(card => card.index == cardId);
+        let cards2 = cards.splice(idx, 1);
+        sessionStorage.setItem("cards", JSON.stringify(cards));
+        guestLoadCards();
+        return false;
+    }
+
+    function guestUpdateCategories(category, mode){
+        let cats = JSON.parse(sessionStorage.getItem("cats"));
+        let cards = JSON.parse(sessionStorage.getItem("cards"));
+        // Check if the category exists
+        if (mode == "add") {
+            if (cats.findIndex(cat => cat == category) == -1){
+                cats.push(category)
+                sessionStorage.setItem("cats", JSON.stringify(cats))
+            }
+        }
+        // Check if the category contains a card
+        if (mode == "delete") {
+            if (cards.findIndex(card => card.set == category) == -1){
+                cats.pop(category)
+                sessionStorage.setItem("cats", JSON.stringify(cats))
+            }
+        }
+    }
+
+    function guestUpdateCard(editCardIndex){
+        let cards = JSON.parse(sessionStorage.getItem("cards"));
+        let editIdx = cards.findIndex(card => card.index == editCardIndex);
+        let edit_card = cards[editIdx];
+
+        // Update the card's values and save
+        edit_card.question = document.getElementById('edit_question').value
+        edit_card.answer = document.getElementById('edit_answer').value
+        edit_card.set = document.getElementById('edit_category').value
+        edit_card.color = document.getElementById('cardColors').value
+        cards[editIdx] = edit_card;
+        sessionStorage.setItem("cards", JSON.stringify(cards))
+
+        // Update the editCardSubmit 
+        document.getElementById("card-prompt-btn").outerHTML = `<button type="submit" id="card-prompt-btn" class="btn btn-primary my-2" style="width: 100%;"> Save flashcard </button>`
+        
+        // Hide the edit prompt
+        guestResetCardPrompt()
+        guestLoadCards()
+    }
+
+    function guestEditCardPrompt(editCardIndex){
+        let cards = JSON.parse(sessionStorage.getItem("cards"));
+        let edit_card = cards.find(card => card.index == editCardIndex);
+
+        // Display edit prompt
+        document.getElementById('cancelEdit').innerText = "Undo Changes";
+        document.getElementById("newFlash").classList.add("hide-prompt");
+        document.getElementById("newCardPrompt").classList.remove("hide-prompt");    
+
+        // Set the values
+        document.getElementById('edit_question').value = edit_card.question;
+        document.getElementById('edit_answer').value = edit_card.answer;
+        document.getElementById('edit_category').value = edit_card.set;
+        document.getElementById('cardColors').value = edit_card.color;
+        document.getElementById("newCardPrompt").style.backgroundColor = edit_card.color;
+        
+        // Set the update function
+        document.getElementById("card-prompt-btn").outerHTML = `<button id="card-prompt-btn" class="btn btn-primary my-2" onclick="return guestUpdateCard(${edit_card.index});" style="width: 100%;"> Update Card </button>`
+    }
+
+    function guestResetCardPrompt(){
+        document.getElementById("edit_question").value = '';
+        document.getElementById("edit_question").value = '';
+        document.getElementById("edit_answer").value = '';
+        document.getElementById("edit_category").value = '';
+        document.getElementById("prompt-color").childNodes[1].value = 'White';
+        document.getElementById("newCardPrompt").style.backgroundColor = 'White';
+
+        // Hide the prompt and show the create card button
+        document.getElementById("newCardPrompt").classList.add("hide-prompt");
+        document.getElementById("newFlash").classList.remove("hide-prompt");
+    }
+</script>
+
+<style>
+    .hide-prompt{ display: none; }
+    .hide-ans{ display: none; }
+    .color-selector{ padding: 12px 5px 12px 5px;}
+</style>
+
+<!-- The page content -->
+<h1 class="mt-4 mx-2"> Welcome to Flash <%= name %>! </h1>
+<div class="d-flex justify-content-center">
+    <div class="col-md-4 my-1">
+        <button class="btn btn-info my-2" id="newFlash"> Create a Flashcard </button>
+        <div class="card card-body prompt hide-prompt" id="newCardPrompt">
+            <button onclick="return guestResetCardPrompt()" class="btn btn-info my-2" id="cancelEdit"> Close Prompt </button>
+            <form id="add-card-form" onsubmit="return guestAddCard();">
+                <div class="form-group" style="display: none;"><textarea name="name" type="hidden" form="add-card-form"><%= name %></textarea></div>
+                <div class="form-group" style="display: none;"><textarea name="email" type="hidden" form="add-card-form"><%= email %></textarea></div>
+                <div class="form-group" style="display: none;"><textarea name="flashId" type="hidden" form="add-card-form"><%= flashId %></textarea></div>
+                <div class="form-group">
+                    <label for="question"> Question </label>
+                    <textarea id="edit_question" name="question" class="form-control" row="3" id="newQuestion"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="answer"> Answer </label>
+                    <textarea id="edit_answer" name="answer" class="form-control" row="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="set"> Category(optional) </label>
+                    <input type="text" id="edit_category" name="set" class="form-control" placeholder="Enter a category to save this card to.">
+                </div>
+                <label for="color"> Color </label>
+                <div id="prompt-color" class="ml-3" style="width:200px;">
+                    <select name="color" id="cardColors" onchange="changeColor(this, value)">
+                    <option value="White" style="background-color: white"><Option> White </Option></option>
+                    <option value="Wheat" style="background-color: wheat;"> Wheat </option>
+                    <option value="Lightgoldenrodyellow" style="background-color: lightgoldenrodyellow;"> Lightgoldenrodyellow </option>
+                    <option value="Papayawhip" style="background-color: papayawhip;"> Papayawhip </option>
+                    <option value="Peru" style="background-color: peru;"> Peru </option>
+                    <option value="Slateblue" style="background-color: slateblue;"> Slateblue </option>
+                    <option value="Lemonchiffon" style="background-color: lemonchiffon;"> lemonchiffon </option>
+                    </select>
+                </div>
+                <button type="submit" id="card-prompt-btn" class="btn btn-primary my-2" style="width: 100%;"> Save flashcard </button>
+            </form>    
+        </div>
+    </div>
+</div>
+<hr style="border: 0.2rem solid #F3969A;">
+<div class="mx-2">
+    <div id="flashcards"></div>
+</div>
